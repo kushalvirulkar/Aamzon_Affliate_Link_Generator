@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String longUrl = urlInput.getText().toString().trim();
-                String affiliateTag = affiliateTagInput.getText().toString().trim();
+                //String affiliateTag = affiliateTagInput.getText().toString().trim();
 
 
                 if (!longUrl.isEmpty() && !affiliateTag.isEmpty()) {
