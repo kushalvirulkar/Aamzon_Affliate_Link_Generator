@@ -1,5 +1,5 @@
 [versions]
-agp = "8.7.3"
+agp = "8.8.0"
 auth = "2.20.41"
 awsAndroidSdkCore = "2.16.24"
 awsJavaSdk = "1.12.269"

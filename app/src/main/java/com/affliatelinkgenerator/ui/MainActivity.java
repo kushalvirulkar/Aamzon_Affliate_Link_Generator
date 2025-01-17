@@ -2,17 +2,22 @@ package com.affliatelinkgenerator.ui;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.StrictMode;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
 
-    private EditText urlInput, affiliateTagInput;
+    private EditText urlInput;
     private Button generateButton;
     private EditText resultText;
 
@@ -23,23 +28,31 @@ public class MainActivity extends AppCompatActivity {
 
         // UI components
         urlInput = findViewById(R.id.urlInput);
-        affiliateTagInput = findViewById(R.id.affiliateTagInput);
         generateButton = findViewById(R.id.generateButton);
         resultText = findViewById(R.id.resultText);
+
+        String affiliateTag = "giftcorner01-21";
+
+        // Allow network operations on main thread (for simplicity)
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
         // Button click listener
         generateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String longUrl = urlInput.getText().toString().trim();
-                //String affiliateTag = affiliateTagInput.getText().toString().trim();
+                String inputUrl = urlInput.getText().toString().trim();
 
-
-                if (!longUrl.isEmpty() && !affiliateTag.isEmpty()) {
-                    String affiliateLink = createAffiliateLink(longUrl, affiliateTag);
-                    resultText.setText(affiliateLink);
+                if (!inputUrl.isEmpty()) {
+                    try {
+                        String expandedUrl = expandShortUrl(inputUrl);
+                        String affiliateLink = createAffiliateLink(expandedUrl, affiliateTag);
+                        resultText.setText(affiliateLink);
+                    } catch (Exception e) {
+                        resultText.setText("Error: " + e.getMessage());
+                    }
                 } else {
-                    resultText.setText("Please enter a valid Amazon URL and Affiliate Tag.");
+                    resultText.setText("Please enter a valid Amazon URL.");
                 }
             }
         });
@@ -56,10 +69,27 @@ public class MainActivity extends AppCompatActivity {
             // Extract ASIN
             String asin = matcher.group(1);
             // Create affiliate link
-            return "https://www.amazon.in/dp/" + asin + "/" + "?tag=" + affiliateTag ;
+            return "https://www.amazon.in/dp/" + asin + "/?tag=" + affiliateTag;
         } else {
             // Return error if ASIN not found
             return "Invalid Amazon URL. ASIN not found.";
         }
+    }
+
+    // Method to expand short Amazon URL
+    private String expandShortUrl(String shortUrl) throws IOException {
+        // Check if the URL is short
+        if (shortUrl.contains("amzn.in")) {
+            URL url = new URL(shortUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setInstanceFollowRedirects(false); // To handle redirects manually
+            String expandedUrl = connection.getHeaderField("Location");
+            connection.disconnect();
+
+            Log.i("tag","amzonUrl: "+expandedUrl);
+
+            return expandedUrl != null ? expandedUrl : shortUrl; // Return the expanded URL or original
+        }
+        return shortUrl; // If not short, return as is
     }
 }
